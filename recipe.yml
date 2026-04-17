@@ -1,4 +1,4 @@
-name: Angstlos
+name: Custom Vanilla Desktop
 id: custom
 vibversion: 1.0.7
 
@@ -6,34 +6,23 @@ stages:
   - id: build
     base: ghcr.io/vanilla-os/desktop:main
     addincludes: true
-    singlelayer: false
-    labels:
-      maintainer: self-maintained
-    args:
-      DEBIAN_FRONTEND: noninteractive
-
-    runs:
-      commands:
-        - echo 'APT::Install-Recommends "1";' > /etc/apt/apt.conf.d/01norecommends
-
     modules:
       - name: init-setup
         type: shell
         commands:
           - lpkg --unlock
           - apt-get update
+          - apt-get install -y curl ca-certificates
 
-      # --- TAILSCALE INSTALLATION START ---
-      - name: tailscale-repo
-        type: shell
-        commands:
-          - curl -fsSL https://tailscale.com | tee /usr/share/keyrings/tailscale-archive-keyring.gpg >/dev/null
-          - curl -fsSL https://tailscale.com | tee /etc/apt/sources.list.d/tailscale.list
       - name: install-tailscale
         type: apt
+        sources:
+          - key: https://tailscale.com
+            uris: https://tailscale.com
+            suites: sid
+            components: main
         packages:
           - tailscale
-      # --- TAILSCALE INSTALLATION END ---
 
       - name: set-image-name-abroot
         type: includes
@@ -46,23 +35,3 @@ stages:
           - apt-get autoremove -y
           - apt-get clean
           - lpkg --lock
-
-      - name: fsguard
-        type: fsguard
-        CustomFsGuard: false
-        FsGuardLocation: "/usr/sbin/FsGuard"
-        GenerateKey: true
-        FilelistPaths: ["/usr/bin"]
-        modules:
-          - name: remove-prev-fsguard
-            type: shell
-            commands:
-              - rm -rf /FsGuard 
-              - rm -f ./minisign.pub ./minisign.key 
-              - chmod +x /usr/sbin/init
-
-      - name: cleanup2
-        type: shell
-        commands:
-          - rm -rf /tmp/*
-          - rm -rf /var/tmp/*

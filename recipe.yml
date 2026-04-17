@@ -76,4 +76,23 @@ stages:
     type: shell
     commands:
       - rm -rf /tmp/*
+
+- name: Angstlos
+id: custom
+vibversion: 1.0.7
+stages:
+  - id: build
+    base: ghcr.io/vanilla-os/desktop:main
+    addincludes: true
+    modules:
+      - name: tailscale-repo
+        type: shell
+        commands:
+          - curl -fsSL https://tailscale.com | tee /usr/share/keyrings/tailscale-archive-keyring.gpg >/dev/null
+          - curl -fsSL https://tailscale.com | tee /etc/apt/sources.list.d/tailscale.list
+      - name: install-tailscale
+        type: apt
+        packages:
+          - tailscale
+
       - rm -rf /var/tmp/*
